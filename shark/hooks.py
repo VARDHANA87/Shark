@@ -91,23 +91,23 @@ required_apps = ["frappe/erpnext", "frappe/hrms"]
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"shark.tasks.all"
-# 	],
-# 	"daily": [
-# 		"shark.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"shark.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"shark.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"shark.tasks.monthly"
-# 	]
-# }
+#scheduler_events = {
+#	"all": [
+#		"shark.tasks.all"
+#	],
+#	"daily": [
+#		"shark.tasks.daily"
+#	],
+#	"hourly": [
+#		"shark.tasks.hourly"
+#	],
+#	"weekly": [
+#		"shark.tasks.weekly"
+#	],
+#	"monthly": [
+#		"shark.tasks.monthly"
+#	]
+#}
 
 # Testing
 # -------
