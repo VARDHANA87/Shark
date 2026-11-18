@@ -40,34 +40,28 @@ def execute(filters=None):
 	res = get_result(filters, account_details)
 	updated_res = []
 	for d in res:
-		if d.voucher_type=="Purchase Invoice":
-			invoice_data=frappe.db.sql("""select bill_no,bill_date,supplier_name
-			from `tabPurchase Invoice` where name='"""+d.voucher_no+"""'""", as_dict=1)
-			po_number=frappe.db.sql("""select poi.name,pii.purchase_order 
-			from `tabPurchase Invoice` poi,`tabPurchase Invoice Item` pii 
-			where poi.name=pii.parent and poi.name='"""+d.voucher_no+"""'""", as_dict=1)
-
-			d["supplier"] = invoice_data[0].supplier_name
-			d["supplier_invoice_no"] = invoice_data[0].bill_no
-			if invoice_data[0].bill_date is not None:
-				d["supplier_invoice_date"] = invoice_data[0].bill_date.strftime("%d-%m-%Y")
+		d = frappe._dict(d)  # opening / total rows come back as plain dicts
+		if d.voucher_type in ("Purchase Invoice", "Purchase Receipt"):
+			if d.voucher_type == "Purchase Invoice":
+				header = frappe.db.get_value(
+					"Purchase Invoice", d.voucher_no, ["bill_no", "bill_date", "supplier_name"], as_dict=1
+				)
 			else:
-				d["supplier_invoice_date"] = invoice_data[0].bill_date
-			d["po_no"] = po_number[0]['purchase_order']
-			updated_res.append(d)
-		elif d.voucher_type=="Purchase Receipt":
-			receipt_data=frappe.db.sql("""select bill_no,bill_date,supplier_name
-			from `tabPurchase Receipt` where name='"""+d.voucher_no+"""'""", as_dict=1)
-			po_number=frappe.db.sql("""select pri.purchase_order 
-			from `tabPurchase Receipt` pr,`tabPurchase Receipt Item` pri 
-			where pr.name=pri.parent and pr.name='"""+d.voucher_no+"""'""", as_dict=1)
-			d["supplier"] = receipt_data[0].supplier_name
-			d["supplier_invoice_no"] = receipt_data[0].bill_no
-			if receipt_data[0].bill_date is not None:
-				d["supplier_invoice_date"] = receipt_data[0].bill_date.strftime("%d-%m-%Y")
-			else:
-				d["supplier_invoice_date"] = receipt_data[0].bill_date
-			d["po_no"] = po_number[0]['purchase_order']
+				# Purchase Receipt has no bill no / date: use the supplier's delivery note no
+				header = frappe.db.get_value(
+					"Purchase Receipt",
+					d.voucher_no,
+					["supplier_delivery_note as bill_no", "supplier_name"],
+					as_dict=1,
+				)
+			header = header or frappe._dict()
+			po_no = frappe.db.get_value(
+				d.voucher_type + " Item", {"parent": d.voucher_no, "purchase_order": ["is", "set"]}, "purchase_order"
+			)
+			d["supplier"] = header.supplier_name
+			d["supplier_invoice_no"] = header.bill_no
+			d["supplier_invoice_date"] = header.bill_date.strftime("%d-%m-%Y") if header.get("bill_date") else None
+			d["po_no"] = po_no
 			updated_res.append(d)
 		else:
 			d["supplier"] = " "
