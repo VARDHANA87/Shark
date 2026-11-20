@@ -17,8 +17,6 @@ import time
 import math
 import base64
 import ast
-import PyPDF2
-from PyPDF2 import PdfFileWriter, PdfFileReader,PdfFileMerger
 from shutil import copyfile
 parent_list = []
 

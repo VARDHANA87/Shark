@@ -10,6 +10,7 @@ app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "jyoti@gmail.com"
 app_license = "MIT"
+required_apps = ["frappe/erpnext", "frappe/hrms"]
 
 # Includes in <head>
 # ------------------
@@ -90,23 +91,23 @@ app_license = "MIT"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"shark.tasks.all"
-# 	],
-# 	"daily": [
-# 		"shark.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"shark.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"shark.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"shark.tasks.monthly"
-# 	]
-# }
+#scheduler_events = {
+#	"all": [
+#		"shark.tasks.all"
+#	],
+#	"daily": [
+#		"shark.tasks.daily"
+#	],
+#	"hourly": [
+#		"shark.tasks.hourly"
+#	],
+#	"weekly": [
+#		"shark.tasks.weekly"
+#	],
+#	"monthly": [
+#		"shark.tasks.monthly"
+#	]
+#}
 
 # Testing
 # -------

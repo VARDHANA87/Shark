@@ -8,9 +8,9 @@ from frappe.utils import flt, cint, getdate, now, date_diff
 from erpnext.stock.utils import add_additional_uom_columns
 from erpnext.stock.report.stock_ledger.stock_ledger import get_item_group_condition
 
-from erpnext.stock.report.stock_ageing.stock_ageing import get_fifo_queue, get_average_age
+from erpnext.stock.report.stock_ageing.stock_ageing import FIFOSlots
+from erpnext.stock.report.stock_balance.stock_balance import get_stock_ageing_data
 
-from six import iteritems
 
 def execute(filters=None):
 	if not filters: filters = {}
@@ -32,7 +32,7 @@ def execute(filters=None):
 
 	if filters.get('show_stock_ageing_data'):
 		filters['show_warehouse_wise_stock'] = True
-		item_wise_fifo_queue = get_fifo_queue(filters, sle)
+		item_wise_fifo_queue = FIFOSlots(filters).generate()
 
 	# if no stock ledger entry found return
 	if not sle:
@@ -72,22 +72,12 @@ def execute(filters=None):
 			if include_uom:
 				conversion_factors.setdefault(item, item_map[item].conversion_factor)
 
-			if filters.get('show_stock_ageing_data'):
-				fifo_queue = item_wise_fifo_queue[(item, warehouse)].get('fifo_queue')
-
-				stock_ageing_data = {
-					'average_age': 0,
-					'earliest_age': 0,
-					'latest_age': 0
-				}
+			if filters.get("show_stock_ageing_data"):
+				fifo_queue = (item_wise_fifo_queue.get((item, warehouse)) or {}).get("fifo_queue")
+				stock_ageing_data = {"average_age": 0, "earliest_age": 0, "latest_age": 0}
 				if fifo_queue:
-					fifo_queue = sorted(filter(_func, fifo_queue), key=_func)
-					if not fifo_queue: continue
-
-					stock_ageing_data['average_age'] = get_average_age(fifo_queue, to_date)
-					stock_ageing_data['earliest_age'] = date_diff(to_date, fifo_queue[0][1])
-					stock_ageing_data['latest_age'] = date_diff(to_date, fifo_queue[-1][1])
-
+					stock_ageing_data.update(get_stock_ageing_data(fifo_queue, to_date))
+					stock_ageing_data.pop("fifo_queue", None)
 				report_data.update(stock_ageing_data)
 
 			data.append(report_data)
@@ -162,7 +152,7 @@ def get_stock_ledger_entries(filters, items):
 			sle.company, sle.voucher_type, sle.qty_after_transaction, sle.stock_value_difference,
 			sle.item_code as name, sle.voucher_no
 		from
-			`tabStock Ledger Entry` sle force index (posting_sort_index)
+			`tabStock Ledger Entry` sle
 		where sle.docstatus < 2 %s %s
 		order by sle.posting_date, sle.posting_time, sle.creation, sle.actual_qty""" % #nosec
 		(item_conditions_sql, conditions), as_dict=1)
@@ -219,7 +209,7 @@ def filter_items_with_no_transactions(iwb_map, float_precision):
 		qty_dict = iwb_map[(company, item, warehouse)]
 
 		no_transactions = True
-		for key, val in iteritems(qty_dict):
+		for key, val in qty_dict.items():
 			val = flt(val, float_precision)
 			qty_dict[key] = val
 			if key != "val_rate" and val:
@@ -275,7 +265,7 @@ def get_item_details(items, sle, filters):
 
 	if filters.get('show_variant_attributes', 0) == 1:
 		variant_values = get_variant_values_for(list(item_details))
-		item_details = {k: v.update(variant_values.get(k, {})) for k, v in iteritems(item_details)}
+		item_details = {k: v.update(variant_values.get(k, {})) for k, v in item_details.items()}
 
 	return item_details
 
